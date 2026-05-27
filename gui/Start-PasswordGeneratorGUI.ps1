@@ -28,6 +28,22 @@ $srcRoot = Join-Path $PSScriptRoot '..\src'
 . (Join-Path $srcRoot 'SecretStore.ps1')
 
 # ---------------------------------------------------------------------------
+# Setup check — runs before the window loads so the UI reflects reality
+# ---------------------------------------------------------------------------
+$script:Setup = @{
+    SecretMgmt      = [bool](Get-Module -ListAvailable Microsoft.PowerShell.SecretManagement)
+    SecretStore     = [bool](Get-Module -ListAvailable Microsoft.PowerShell.SecretStore)
+    VaultRegistered = $false
+}
+if ($script:Setup.SecretMgmt) {
+    try {
+        Import-Module Microsoft.PowerShell.SecretManagement -ErrorAction Stop
+        $script:Setup.VaultRegistered = [bool](Get-SecretVault -ErrorAction SilentlyContinue)
+    } catch { }
+}
+$script:SetupOk = $script:Setup.SecretMgmt -and $script:Setup.SecretStore -and $script:Setup.VaultRegistered
+
+# ---------------------------------------------------------------------------
 # Load config
 # ---------------------------------------------------------------------------
 $configPath = Join-Path $PSScriptRoot '..\config\password-rules.json'
@@ -253,6 +269,40 @@ function Get-MergedRules {
                       Background="#1E1E1E">
             <StackPanel Margin="18,14,18,14" >
 
+                <!-- ── Setup banner (hidden when setup is complete) ──────── -->
+                <Border x:Name="SetupBanner"
+                        Background="#2A1A1A"
+                        BorderBrush="#F44747"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="14,10"
+                        Margin="0,0,0,10"
+                        Visibility="Collapsed">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Foreground="#F44747"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       Text="&#x26A0;  Vault setup incomplete"
+                                       Margin="0,0,0,5"/>
+                            <TextBlock x:Name="SetupDetail"
+                                       Foreground="#AAAAAA"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button x:Name="RunSetupBtn"
+                                Grid.Column="1"
+                                Content="Run Setup"
+                                Style="{StaticResource SecButton}"
+                                VerticalAlignment="Center"
+                                Margin="12,0,0,0"/>
+                    </Grid>
+                </Border>
+
                 <!-- ── Profile ─────────────────────────────────────────── -->
                 <Border Background="#252526" BorderBrush="#3F3F46"
                         BorderThickness="1" CornerRadius="4"
@@ -442,6 +492,9 @@ $SecretNameBox   = $window.FindName('SecretNameBox')
 $SaveVaultBtn    = $window.FindName('SaveVaultBtn')
 $VaultFeedback   = $window.FindName('VaultFeedback')
 $StatusBar       = $window.FindName('StatusBar')
+$SetupBanner     = $window.FindName('SetupBanner')
+$SetupDetail     = $window.FindName('SetupDetail')
+$RunSetupBtn     = $window.FindName('RunSetupBtn')
 
 # ---------------------------------------------------------------------------
 # State
@@ -449,6 +502,22 @@ $StatusBar       = $window.FindName('StatusBar')
 $script:CurrentPassword = ''
 $script:ClipTimer       = $null
 $script:ClipSecondsLeft = 0
+
+# ---------------------------------------------------------------------------
+# Apply setup status
+# ---------------------------------------------------------------------------
+if (-not $script:SetupOk) {
+    $missing = [System.Collections.Generic.List[string]]::new()
+    if (-not $script:Setup.SecretMgmt)      { $missing.Add('Microsoft.PowerShell.SecretManagement not installed') }
+    if (-not $script:Setup.SecretStore)     { $missing.Add('Microsoft.PowerShell.SecretStore not installed') }
+    if (-not $script:Setup.VaultRegistered) { $missing.Add('no vault registered') }
+
+    $SetupBanner.Visibility  = [System.Windows.Visibility]::Visible
+    $SetupDetail.Text        = ($missing -join ' · ') + '. Run Setup-Environment.ps1 to fix.'
+
+    $SaveVaultChk.IsEnabled  = $false
+    $SaveVaultChk.ToolTip    = 'Run Setup-Environment.ps1 first to enable vault features'
+}
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -661,6 +730,15 @@ $CopyBtn.Add_Click({
     })
 
     $script:ClipTimer.Start()
+})
+
+# ---------------------------------------------------------------------------
+# Event: Run Setup button
+# ---------------------------------------------------------------------------
+$RunSetupBtn.Add_Click({
+    $setupScript = Resolve-Path (Join-Path $PSScriptRoot '..\Setup-Environment.ps1')
+    Start-Process pwsh -ArgumentList @('-NoExit', '-File', "`"$setupScript`"")
+    Set-Status 'Setup script launched — re-open the GUI once it completes.'
 })
 
 # ---------------------------------------------------------------------------
