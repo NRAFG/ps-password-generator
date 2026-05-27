@@ -14,11 +14,25 @@ A PowerShell password generator driven by JSON configuration profiles, using cry
 ## Prerequisites
 
 - PowerShell 7 or later
-- [Microsoft.PowerShell.SecretManagement](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.secretmanagement/) module
+- Edge WebView2 runtime (pre-installed on Windows 11) — required for the GUI
 
-  ```powershell
-  Install-Module -Name Microsoft.PowerShell.SecretManagement -Scope CurrentUser
-  ```
+## Quick setup
+
+Run the setup script once to install all dependencies, register a vault, and verify everything works:
+
+```powershell
+.\Setup-Environment.ps1
+```
+
+Optional parameters:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `-VaultName` | `MyVault` | Name for the SecretStore vault |
+| `-Scope` | `CurrentUser` | `CurrentUser` or `AllUsers` (AllUsers requires elevation) |
+| `-SkipTests` | off | Skip the Pester smoke test at the end |
+
+The script is idempotent — safe to re-run; already-installed modules and registered vaults are skipped.
 
 - A registered SecretManagement vault (required only when using `-SaveToStore`)
 
