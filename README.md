@@ -8,6 +8,7 @@ A PowerShell password generator driven by JSON configuration profiles, using cry
 - **Named profiles** — switch between pre-defined profiles (e.g. `Default`, `Strong`, `PIN`) without changing code
 - **Cryptographic randomness** — uses `System.Security.Cryptography.RandomNumberGenerator` (CSRNG), never `Get-Random`
 - **Microsoft SecretManagement integration** — optionally save generated passwords directly to a registered vault
+- **WPF GUI** — dark-themed interactive window with profile selector, length slider, character-class toggles, clipboard auto-clear, and vault save
 - **Pester 5 test suite** — full unit and integration tests under `tests\`
 
 ## Prerequisites
@@ -85,6 +86,16 @@ Example snippet:
   }
 }
 ```
+
+## GUI
+
+Launch the interactive WPF front-end (requires PowerShell 7+ and .NET WPF assemblies, included with Windows):
+
+```powershell
+pwsh -File .\gui\Start-PasswordGeneratorGUI.ps1
+```
+
+The GUI lets you pick a profile, adjust the length with a slider, toggle character classes, copy to clipboard (auto-clears after 30 seconds), and save directly to a SecretManagement vault — all without touching the command line.
 
 ## Running Tests
 

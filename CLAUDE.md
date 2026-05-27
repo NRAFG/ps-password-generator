@@ -13,6 +13,8 @@ PS-PasswordGenerator\
     SecretStore.ps1      # Wrapper around Microsoft.PowerShell.SecretManagement cmdlets
   config\
     password-rules.json  # Defaults and named profiles (length, character sets, etc.)
+  gui\
+    Start-PasswordGeneratorGUI.ps1  # WPF dark-theme GUI front-end
   tests\
     *.Tests.ps1          # Pester 5 test files
 ```
