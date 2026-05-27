@@ -1,0 +1,22 @@
+# PSReadLine history
+ConsoleHost_history.txt
+
+# Secrets — never commit these
+*.secret
+*.secrets
+secrets.json
+.env
+
+# Windows thumbnail / metadata files
+Thumbs.db
+desktop.ini
+
+# macOS metadata
+.DS_Store
+
+# Log files
+*.log
+
+# Test output
+TestResults/
+coverage/
